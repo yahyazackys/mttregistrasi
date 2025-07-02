@@ -53,6 +53,7 @@ class AuthController extends Controller
                 'password' => Hash::make($data['password']),
                 'terms_agreed' => $data['terms_agreed'],
                 'role' => 'vendor',
+                'status' => 'not approved',
             ]);
 
             event(new Registered($user));

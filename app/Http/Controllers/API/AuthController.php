@@ -36,32 +36,51 @@ class AuthController extends Controller
 
     public function registerVendor(Request $request)
     {
-        $data = $request->validate([
-            'email' => 'required|email|unique:users,email',
-            'pic_name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'password' => 'required|string|min:8|confirmed',
-            'terms_agreed' => 'required|boolean',
-        ]);
+        try {
+            $data = $request->validate([
+                'email' => 'required|email|unique:users,email',
+                'pic_name' => 'required|string|max:255',
+                'phone' => 'required|string|max:20',
+                'password' => 'required|string|min:6|confirmed',
+                'terms_agreed' => 'required|boolean',
+            ]);
 
-        $user = User::create([
-            'name' => $data['pic_name'],
-            'email' => $data['email'],
-            'pic_name' => $data['pic_name'],
-            'phone' => $data['phone'],
-            'password' => Hash::make($data['password']),
-            'terms_agreed' => $data['terms_agreed'],
-            'role' => 'vendor',
-        ]);
+            $user = User::create([
+                'name' => $data['pic_name'],
+                'email' => $data['email'],
+                'pic_name' => $data['pic_name'],
+                'phone' => $data['phone'],
+                'password' => Hash::make($data['password']),
+                'terms_agreed' => $data['terms_agreed'],
+                'role' => 'vendor',
+            ]);
 
-        event(new Registered($user));
+            event(new Registered($user));
 
-        return response()->json([
-            'success' => true,
-            'data' => $user,
-            'message' => 'Registrasi vendor berhasil. Silakan verifikasi email Anda.'
-        ], 200);
+            return response()->json([
+                'success' => true,
+                'data' => $user,
+                'message' => 'Registrasi vendor berhasil. Silakan verifikasi email Anda.'
+            ], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Error validasi input
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            // Error lainnya (misalnya database, logika, dll)
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan pada server',
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ], 500);
+        }
     }
+
 
     public function login(Request $request)
     {

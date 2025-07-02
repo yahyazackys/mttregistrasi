@@ -35,31 +35,33 @@ class AuthController extends Controller
     }
 
     public function registerVendor(Request $request)
-{
-    $data = $request->validate([
-        'email' => 'required|email|unique:users,email',
-        'pic_name' => 'required|string|max:255',
-        'phone' => 'required|string|max:20',
-        'password' => 'required|string|min:8|confirmed',
-        'terms_agreed' => 'required|boolean',
-    ]);
+    {
+        $data = $request->validate([
+            'email' => 'required|email|unique:users,email',
+            'pic_name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
+            'password' => 'required|string|min:8|confirmed',
+            'terms_agreed' => 'required|boolean',
+        ]);
 
-    $user = User::create([
-        'name' => $data['pic_name'],
-        'email' => $data['email'],
-        'pic_name' => $data['pic_name'],
-        'phone' => $data['phone'],
-        'password' => Hash::make($data['password']),
-        'terms_agreed' => $data['terms_agreed'],
-        'role' => 'vendor',
-    ]);
+        $user = User::create([
+            'name' => $data['pic_name'],
+            'email' => $data['email'],
+            'pic_name' => $data['pic_name'],
+            'phone' => $data['phone'],
+            'password' => Hash::make($data['password']),
+            'terms_agreed' => $data['terms_agreed'],
+            'role' => 'vendor',
+        ]);
 
-    event(new Registered($user));
+        event(new Registered($user));
 
-    return response()->json([
-        'message' => 'Registrasi vendor berhasil. Silakan verifikasi email Anda.'
-    ], 200);
-}
+        return response()->json([
+            'success' => true,
+            'data' => $user,
+            'message' => 'Registrasi vendor berhasil. Silakan verifikasi email Anda.'
+        ], 200);
+    }
 
     public function login(Request $request)
     {
@@ -70,13 +72,13 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+        if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['Email atau password salah.']
             ]);
         }
 
-        if (! $user->hasVerifiedEmail()) {
+        if (!$user->hasVerifiedEmail()) {
             return response()->json(['message' => 'Email belum diverifikasi.'], 403);
         }
 
@@ -99,11 +101,11 @@ class AuthController extends Controller
     {
         $user = User::findOrFail($id);
 
-        if (! hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
+        if (!hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
             return response()->json(['message' => 'Link tidak valid.'], 403);
         }
 
-        if (! $user->hasVerifiedEmail()) {
+        if (!$user->hasVerifiedEmail()) {
             $user->markEmailAsVerified();
         }
 
@@ -152,7 +154,7 @@ class AuthController extends Controller
         );
 
         return $status == Password::PASSWORD_RESET
-                    ? response()->json(['message' => 'Password berhasil direset.'])
-                    : response()->json(['message' => __($status)], 400);
+            ? response()->json(['message' => 'Password berhasil direset.'])
+            : response()->json(['message' => __($status)], 400);
     }
 }
